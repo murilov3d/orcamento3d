@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MuriloV3D — Sistema de Orçamentos</title>
+  <meta name="description"
+    content="Sistema profissional de cálculo de orçamentos para impressão 3D e modelagem — MuriloV3D">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+  <!-- ══════════════ HEADER ══════════════ -->
+  <div class="app-wrapper">
+    <header class="app-header">
+      <div class="app-logo">
+        <div class="logo-icon">🖨</div>
+        <div>
+          <h1>MuriloV3D</h1>
+          <span>Sistema de Orçamentos</span>
+        </div>
+      </div>
+
+      <nav class="tabs-nav" role="tablist">
+        <button class="tab-btn" data-tab="costs" role="tab" id="tab-btn-costs">
+          <span class="tab-icon">⚙️</span>
+          <span class="tab-label">Base de Custos</span>
+        </button>
+        <button class="tab-btn active" data-tab="budget" role="tab" id="tab-btn-budget">
+          <span class="tab-icon">📝</span>
+          <span class="tab-label">Novo Orçamento</span>
+        </button>
+        <button class="tab-btn" data-tab="history" role="tab" id="tab-btn-history">
+          <span class="tab-icon">📂</span>
+          <span class="tab-label">Histórico</span>
+        </button>
+      </nav>
+
+      <div class="header-actions">
+        <span id="sync-status" style="font-size:12px; white-space:nowrap;"></span>
+        <button class="btn btn-secondary btn-sm" id="btn-sheets-config" title="Configurar Google Sheets">
+          <span>📊</span> <span class="tab-label">Sheets</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ══════════════ MAIN ══════════════ -->
+    <main class="app-content">
+
+      <!-- ════════════════════════════════════════════════
+         TAB 1 — BASE DE CUSTOS
+    ════════════════════════════════════════════════ -->
+      <section class="tab-panel" id="tab-costs" role="tabpanel">
+
+        <!-- PESSOAL -->
+        <div class="card">
+          <div class="section-header">
+            <h2 class="section-title">👤 Pessoal</h2>
+            <button class="btn btn-secondary btn-sm" id="btn-add-person">＋ Adicionar</button>
+          </div>
+          <div class="table-wrapper">
+            <table id="personnel-table">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>Valor / Hora (R$)</th>
+                  <th style="width:60px"></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- EQUIPAMENTOS -->
+        <div class="card">
+          <div class="section-header">
+            <h2 class="section-title">🖨️ Equipamentos</h2>
+            <button class="btn btn-secondary btn-sm" id="btn-add-equipment">＋ Adicionar</button>
+          </div>
+          <div class="table-wrapper">
+            <table id="equipment-table">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>Valor de Mercado (R$)</th>
+                  <th>Potência (W)</th>
+                  <th>Depreciação (anos)</th>
+                  <th style="width:60px"></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- MATERIAIS -->
+        <div class="card">
+          <div class="section-header">
+            <h2 class="section-title">🧵 Materiais</h2>
+            <button class="btn btn-secondary btn-sm" id="btn-add-material">＋ Adicionar</button>
+          </div>
+          <div class="table-wrapper">
+            <table id="materials-table">
+              <thead>
+                <tr>
+                  <th>Tipo</th>
+                  <th>Nome</th>
+                  <th>Custo Total (R$)</th>
+                  <th>Quantidade (g / ml)</th>
+                  <th>Custo/g·ml</th>
+                  <th style="width:60px"></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- CUSTOS FIXOS -->
+        <div class="card">
+          <h2 class="section-title" style="margin-bottom:16px;">⚡ Custos Fixos</h2>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label for="energy-kwh">Valor da Energia (R$/kWh)</label>
+              <input type="number" id="energy-kwh" step="0.01" min="0" placeholder="1.34">
+            </div>
+            <div class="form-group">
+              <label for="office-monthly">Custos do Escritório (R$/mês)</label>
+              <input type="number" id="office-monthly" step="0.01" min="0" placeholder="0.00">
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ════════════════════════════════════════════════
+         TAB 2 — NOVO ORÇAMENTO
+    ════════════════════════════════════════════════ -->
+      <section class="tab-panel active" id="tab-budget" role="tabpanel">
+        <!-- EDIT MODE BANNER -->
+        <div id="edit-mode-banner"
+          style="display:none; align-items:center; gap:12px; background:rgba(33,166,230,0.12); border:1px solid rgba(33,166,230,0.35); border-radius:8px; padding:10px 16px; margin-bottom:16px;">
+          <span style="font-size:18px;">✏️</span>
+          <div style="flex:1;">
+            <strong style="color:var(--accent); font-size:13px;">MODO EDIÇÃO</strong>
+            <span class="edit-banner-project"
+              style="color:var(--text-secondary); font-size:13px; margin-left:8px;"></span>
+          </div>
+          <span style="color:var(--text-muted); font-size:12px;">Edite os campos e clique em "Atualizar Orçamento" para
+            salvar.</span>
+        </div>
+
+        <form id="budget-form" onsubmit="return false;" autocomplete="off">
+
+          <!-- DADOS DO CLIENTE -->
+          <div class="card">
+            <h2 class="section-title" style="margin-bottom:16px;">👤 Dados do Cliente e Projeto</h2>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="client-name">Nome do Cliente *</label>
+                <input type="text" id="client-name" placeholder="Ex: João Silva" required>
+              </div>
+              <div class="form-group">
+                <label for="client-contact">Contato (WhatsApp / Email)</label>
+                <input type="text" id="client-contact" placeholder="(11) 99999-9999">
+              </div>
+              <div class="form-group">
+                <label for="project-name">Nome do Projeto / Peça *</label>
+                <input type="text" id="project-name" placeholder="Ex: Suporte para câmera" required>
+              </div>
+            </div>
+          </div>
+
+          <!-- PRODUÇÃO -->
+          <div class="card">
+            <h2 class="section-title" style="margin-bottom:16px;">🖨️ Produção</h2>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="sel-equipment">Equipamento</label>
+                <select id="sel-equipment">
+                  <option value="">— Selecionar —</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="sel-material">Material</label>
+                <select id="sel-material">
+                  <option value="">— Selecionar —</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="sel-person">Responsável</label>
+                <select id="sel-person">
+                  <option value="">— Selecionar —</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="mat-piece">Material — Peça (g)</label>
+                <input type="number" id="mat-piece" step="0.1" min="0" value="0" placeholder="0">
+              </div>
+              <div class="form-group">
+                <label for="mat-support">Material — Suportes (g)</label>
+                <input type="number" id="mat-support" step="0.1" min="0" value="0" placeholder="0">
+              </div>
+            </div>
+          </div>
+
+          <!-- TEMPO -->
+          <div class="card">
+            <h2 class="section-title" style="margin-bottom:16px;">⏱️ Tempo (horas)</h2>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="time-research">Pesquisa / Referência</label>
+                <input type="number" id="time-research" step="0.25" min="0" value="0" placeholder="0">
+              </div>
+              <div class="form-group">
+                <label for="time-modeling">Modelagem 3D</label>
+                <input type="number" id="time-modeling" step="0.25" min="0" value="0" placeholder="0">
+              </div>
+              <div class="form-group">
+                <label for="time-print">Impressão 3D</label>
+                <input type="number" id="time-print" step="0.25" min="0" value="0" placeholder="0">
+              </div>
+              <div class="form-group">
+                <label for="time-wash">Lavagem / Cura / Acabamento</label>
+                <input type="number" id="time-wash" step="0.25" min="0" value="0" placeholder="0">
+              </div>
+            </div>
+          </div>
+
+          <!-- COMERCIAL -->
+          <div class="card">
+            <h2 class="section-title" style="margin-bottom:16px;">💼 Comercial</h2>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="qty-pieces">Quantidade de Peças</label>
+                <input type="number" id="qty-pieces" step="1" min="1" value="1">
+              </div>
+              <div class="form-group">
+                <label for="freight">Frete (R$)</label>
+                <input type="number" id="freight" step="0.01" min="0" value="0">
+              </div>
+              <div class="form-group">
+                <label for="margin">Margem de Lucro (%)</label>
+                <input type="number" id="margin" step="1" min="0" max="999" value="30">
+              </div>
+              <div class="form-group">
+                <label for="taxes">Impostos (%)</label>
+                <input type="number" id="taxes" step="0.1" min="0" max="100" value="0">
+              </div>
+            </div>
+          </div>
+
+          <!-- OUTROS -->
+          <div class="card">
+            <div class="section-header">
+              <h2 class="section-title">📦 Outros</h2>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-add-outro">＋ Adicionar Item</button>
+            </div>
+            <div id="outros-list"></div>
+            <div class="result-row" style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
+              <span style="font-size:13px; color:var(--text-secondary);">Total Outros</span>
+              <span id="outros-total-display" style="font-weight:600; font-family:'JetBrains Mono',monospace;">R$ 0,00</span>
+            </div>
+          </div>
+
+          <!-- OBSERVAÇÕES -->
+          <div class="card">
+            <h2 class="section-title" style="margin-bottom:16px;">📋 Observações</h2>
+            <div class="form-group">
+              <textarea id="notes" rows="3" placeholder="Observações adicionais (prazo, acabamento especial, etc.)"
+                style="resize:vertical;"></textarea>
+            </div>
+          </div>
+
+          <!-- RESULTADO -->
+          <div class="result-card">
+            <h2 class="section-title" style="margin-bottom:20px;">💰 Resumo do Orçamento</h2>
+            <div class="result-rows">
+              <div class="result-row">
+                <span class="label">Custo de Equipamento</span>
+                <span class="value" id="res-equip">R$ 0,00</span>
+              </div>
+              <div class="result-row">
+                <span class="label">Custo de Material</span>
+                <span class="value" id="res-material">R$ 0,00</span>
+              </div>
+              <div class="result-row">
+                <span class="label">Mão de Obra</span>
+                <span class="value" id="res-labour">R$ 0,00</span>
+              </div>
+              <div class="result-row">
+                <span class="label">Rateio Escritório</span>
+                <span class="value" id="res-office">R$ 0,00</span>
+              </div>
+              <div class="result-row divider">
+                <span class="label">Subtotal por Peça</span>
+                <span class="value" id="res-unit">R$ 0,00</span>
+              </div>
+              <div class="result-row">
+                <span class="label">Subtotal do Lote</span>
+                <span class="value" id="res-subtotal">R$ 0,00</span>
+              </div>
+              <div class="result-row">
+                <span class="label">Frete</span>
+                <span class="value" id="res-freight">R$ 0,00</span>
+              </div>
+              <div class="result-row">
+                <span class="label">Outros Custos</span>
+                <span class="value" id="res-outros">R$ 0,00</span>
+              </div>
+              <div class="result-row profit">
+                <span class="label">Lucro</span>
+                <span class="value" id="res-profit">R$ 0,00</span>
+              </div>
+              <div class="result-row">
+                <span class="label">Impostos</span>
+                <span class="value" id="res-taxes">R$ 0,00</span>
+              </div>
+              <div class="result-row total">
+                <span class="label">VALOR FINAL DE VENDA</span>
+                <span class="value" id="res-final">R$ 0,00</span>
+              </div>
+            </div>
+
+            <div style="margin-top:24px; display:flex; gap:12px; justify-content:flex-end; flex-wrap:wrap;">
+              <button type="button" class="btn btn-danger" id="btn-cancel-edit" style="display:none;"
+                title="Cancelar edição e descartar alterações">✕ Cancelar Edição</button>
+              <button type="button" class="btn btn-secondary" onclick="resetBudgetForm()">🔄 Limpar</button>
+              <button type="button" class="btn btn-success btn-lg" id="btn-save-budget">
+                💾 Salvar Orçamento e Gerar Proposta
+              </button>
+            </div>
+          </div>
+
+        </form>
+      </section>
+
+      <!-- ════════════════════════════════════════════════
+         TAB 3 — HISTÓRICO
+    ════════════════════════════════════════════════ -->
+      <section class="tab-panel" id="tab-history" role="tabpanel">
+
+        <div class="history-filters">
+          <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="history-search" placeholder="Buscar por cliente, projeto ou contato…">
+          </div>
+          <div class="form-group" style="min-width:160px;">
+            <select id="history-status-filter">
+              <option value="all">Todos os Status</option>
+              <option value="pending">Pendente</option>
+              <option value="approved">Aprovado</option>
+              <option value="production">Em Produção</option>
+              <option value="done">Concluído</option>
+              <option value="cancelled">Cancelado</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="history-list">
+          <div class="empty-state">
+            <div class="icon">📂</div>
+            <h3>Nenhum orçamento ainda</h3>
+            <p>Crie um novo orçamento na aba "Novo Orçamento"</p>
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+     MODAL — DETALHES DO ORÇAMENTO
+══════════════════════════════════════════════════ -->
+  <div class="modal-overlay" id="modal-details" role="dialog" aria-modal="true" aria-labelledby="modal-details-title">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modal-details-title">📋 Detalhes do Orçamento</h2>
+        <button class="btn btn-ghost btn-icon modal-close" title="Fechar">✕</button>
+      </div>
+      <div id="modal-details-content"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+     MODAL — PROPOSTA WHATSAPP
+══════════════════════════════════════════════════ -->
+  <div class="modal-overlay" id="modal-whatsapp" role="dialog" aria-modal="true" aria-labelledby="modal-wa-title">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modal-wa-title">📱 Proposta para WhatsApp</h2>
+        <button class="btn btn-ghost btn-icon modal-close" title="Fechar">✕</button>
+      </div>
+      <p style="font-size:13px; color:var(--text-secondary); margin-bottom:12px;">
+        Copie o texto abaixo e cole no WhatsApp, ou clique em "Abrir WhatsApp" para abrir diretamente.
+      </p>
+      <pre class="wa-text" id="wa-text"></pre>
+      <div style="display:flex; gap:10px; margin-top:16px; justify-content:flex-end; flex-wrap:wrap;">
+        <button class="btn btn-secondary modal-close">Fechar</button>
+        <button class="btn btn-ghost" id="btn-copy-wa">📋 Copiar Texto</button>
+        <button class="btn btn-primary" id="btn-open-wa">💬 Abrir WhatsApp</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+     MODAL — GOOGLE SHEETS CONFIG
+══════════════════════════════════════════════════ -->
+  <div class="modal-overlay" id="modal-sheets" role="dialog" aria-modal="true">
+    <div class="modal" style="max-width:520px;">
+      <div class="modal-header">
+        <h2 class="modal-title">📊 Configurar Google Sheets</h2>
+        <button class="btn btn-ghost btn-icon modal-close" title="Fechar">✕</button>
+      </div>
+
+      <div style="font-size:13px; color:var(--text-secondary); margin-bottom:16px; line-height:1.7;">
+        <strong style="color:var(--text-primary);">Como configurar:</strong><br>
+        1. Abra sua planilha no Google Sheets<br>
+        2. Menu <strong>Extensões → Apps Script</strong><br>
+        3. Cole o conteúdo do arquivo <code style="background:var(--bg-700);padding:1px 5px;border-radius:4px;">Code.gs</code> e salve<br>
+        4. Clique em <strong>Implantar → Nova implantação</strong><br>
+        &nbsp;&nbsp;&nbsp;• Tipo: <em>App da Web</em><br>
+        &nbsp;&nbsp;&nbsp;• Executar como: <em>Eu</em><br>
+        &nbsp;&nbsp;&nbsp;• Acesso: <em>Qualquer pessoa</em><br>
+        5. Copie a URL gerada e cole abaixo
+      </div>
+
+      <div class="form-group" style="margin-bottom:14px;">
+        <label for="sheets-url-input">URL do Apps Script</label>
+        <input type="url" id="sheets-url-input" placeholder="https://script.google.com/macros/s/…/exec">
+      </div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+        <button class="btn btn-ghost" id="btn-sheets-test">🔍 Testar Conexão</button>
+        <button class="btn btn-secondary" id="btn-sheets-sync">🔄 Sincronizar Agora</button>
+        <button class="btn btn-primary" id="btn-sheets-save" style="margin-left:auto;">💾 Salvar URL</button>
+      </div>
+
+      <div style="background:var(--bg-700);border-radius:var(--radius);padding:12px;font-size:12px;color:var(--text-muted);">
+        ℹ️ Os dados são salvos localmente (localStorage) e sincronizados automaticamente com o Sheets a cada alteração. O Sheets funciona como backup e permite visualizar os dados em planilha.
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+     TOAST CONTAINER
+══════════════════════════════════════════════════ -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
