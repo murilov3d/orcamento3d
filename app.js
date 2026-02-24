@@ -305,9 +305,10 @@ function populateBudgetDropdowns() {
     const selMat = document.getElementById('sel-material');
     const selPerson = document.getElementById('sel-person');
 
-    const eqVal = selEq.value;
-    const matVal = selMat.value;
-    const perVal = selPerson.value;
+    // Se estiver vazio, pega o ID do primeiro item cadastrado (se houver)
+    const eqVal = selEq.value || (state.costs.equipment.length > 0 ? state.costs.equipment[0].id : '');
+    const matVal = selMat.value || (state.costs.materials.length > 0 ? state.costs.materials[0].id : '');
+    const perVal = selPerson.value || (state.costs.personnel.length > 0 ? state.costs.personnel[0].id : '');
 
     selEq.innerHTML = '<option value="">— Selecionar —</option>' +
         state.costs.equipment.map(e => `<option value="${e.id}" ${e.id === eqVal ? 'selected' : ''}>${esc(e.name)}</option>`).join('');
@@ -317,6 +318,11 @@ function populateBudgetDropdowns() {
 
     selPerson.innerHTML = '<option value="">— Selecionar —</option>' +
         state.costs.personnel.map(p => `<option value="${p.id}" ${p.id === perVal ? 'selected' : ''}>${esc(p.name)}</option>`).join('');
+
+    // Força o elemento HTML a assumir o valor pré-selecionado para que o cálculo funcione
+    if (eqVal) selEq.value = eqVal;
+    if (matVal) selMat.value = matVal;
+    if (perVal) selPerson.value = perVal;
 }
 
 // ─── State for "Outros" items ─────────────────────────────────
@@ -622,6 +628,10 @@ function resetBudgetForm() {
     if (cancelBtn) cancelBtn.style.display = 'none';
     const editBanner = document.getElementById('edit-mode-banner');
     if (editBanner) editBanner.style.display = 'none';
+    
+    // 👇 ADICIONE ESTA LINHA 👇
+    populateBudgetDropdowns();
+    
     renderOutrosItems();
     calcBudget();
 }
