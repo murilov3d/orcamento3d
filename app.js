@@ -646,6 +646,7 @@ function saveBudget() {
         },
         personnel: person.name || '',
         outros: JSON.parse(JSON.stringify(outrosItems)),
+        gcodePath: document.getElementById('gcode-path').value, // Captura o caminho do fatiador
         notes: getStr('notes'),
     };
 
@@ -709,7 +710,8 @@ function loadBudgetForEdit(id) {
 
     // Switch to budget tab first (this also populates dropdowns)
     switchTab('budget');
-
+    const pathInput = document.getElementById('gcode-path');
+    if (pathInput) pathInput.value = b.gcodePath || '';
     // Populate text / number fields
     const setVal = (elId, val) => {
         const el = document.getElementById(elId);
