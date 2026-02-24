@@ -681,11 +681,11 @@ function resetBudgetForm() {
     if (cancelBtn) cancelBtn.style.display = 'none';
     const editBanner = document.getElementById('edit-mode-banner');
     if (editBanner) editBanner.style.display = 'none';
-    
+    const gPath = document.getElementById('gcode-path');
+    if (gPath) gPath.value = '';
     // 👇 ADICIONE ESTA LINHA 👇
     populateBudgetDropdowns();
     
-    renderOutrosItems();
     calcBudget();
 }
 
