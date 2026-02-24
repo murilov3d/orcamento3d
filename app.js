@@ -870,6 +870,7 @@ function renderHistory() {
       <td style="color:var(--text-secondary); font-size:12px;">${esc(b.client.contact || '—')}</td>
       <td>${esc(b.project)}</td>
       <td style="font-weight:700; color:var(--accent); white-space:nowrap;">${fmt(b.costs.finalPrice)}</td>
+      <td title="${esc(b.gcodePath)}">${b.gcodePath ? '📂' : '-'}</td>
       <td>
         <div class="status-dropdown-wrap" id="sdw-${b.id}">
           <span class="badge ${cfg.badge}" data-budget-id="${b.id}" onclick="toggleStatusMenu('${b.id}')">
