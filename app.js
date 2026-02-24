@@ -167,6 +167,58 @@ function initTabs() {
             if (target === 'history') renderHistory();
         });
     });
+
+    // 👇 Inicializa o botão de importação assim que as abas forem carregadas
+    initPrusaImport();
+}
+
+// ─── Importação do PrusaSlicer ────────────────────────────────
+function initPrusaImport() {
+    const btnImport = document.getElementById('btn-import-slicer');
+    if (!btnImport) return; // Se o botão não existir na tela, não faz nada
+
+    btnImport.addEventListener('click', async () => {
+        const url = getSheetsUrl();
+        if (!url) {
+            toastMsg('Configure a URL do Sheets nas Configurações primeiro!', 'error');
+            return;
+        }
+
+        const textoOriginal = btnImport.textContent;
+        btnImport.textContent = '⏳ Puxando...';
+        btnImport.disabled = true;
+
+        try {
+            // Usa a sua função nativa sheetsGet para buscar na planilha
+            const data = await sheetsGet('getLastSlicing');
+            
+            if (data && data.ok && data.slicing) {
+                const nameInput = document.getElementById('project-name');
+                const weightInput = document.getElementById('mat-piece');
+                const timeInput = document.getElementById('time-print');
+                const pathInput = document.getElementById('gcode-path');
+
+                if (nameInput) nameInput.value = data.slicing.name || '';
+                if (weightInput) weightInput.value = data.slicing.weight || 0;
+                if (timeInput) timeInput.value = data.slicing.time || 0;
+                if (pathInput) pathInput.value = data.slicing.path || '';
+                
+                // Recalcula o orçamento instantaneamente com os novos dados
+                if (typeof calcBudget === 'function') calcBudget();
+                
+                toastMsg('Dados do fatiador importados com sucesso!', 'success');
+            } else {
+                toastMsg('Nenhum dado encontrado na planilha.', 'error');
+            }
+        } catch (e) {
+            console.error("Erro ao importar do fatiador:", e);
+            toastMsg('Erro de conexão com a planilha.', 'error');
+        } finally {
+            // Volta o botão ao normal
+            btnImport.textContent = textoOriginal;
+            btnImport.disabled = false;
+        }
+    });
 }
 
 // ═══════════════════════════════════════════════════════════════
